@@ -23,8 +23,8 @@ let replaceTemplate = (temp, product) => {
 
 const server = http.createServer((req, res) => {
   const { query, pathname } = url.parse(req.url, true);
+  console.log(query);
   const data = JSON.parse(fs.readFileSync("./dev-data/data.json", "utf8"));
-  console.log(data);
 
   // const dataObj = Json.parse(data);
 
@@ -46,12 +46,16 @@ const server = http.createServer((req, res) => {
     const cardHtml = data.map((el) => replaceTemplate(tempCard, el)).join("");
     const output = tempOverview.replace("{{productCards}}", cardHtml);
     res.write(output);
-  } else if (pathname === "/products") {
-    res.write(tempProduct);
+  } else if (pathname === "/product") {
+    const productQuery = data[query.id];
+    const output = replaceTemplate(tempProduct, productQuery);
+
+    res.write(output);
   } else if (pathname === "/card") {
     res.write(tempCard);
   } else if (pathname === "/api") {
     res.writeHead(200, { "Content-Type": "application/json" });
+
     res.write(JSON.stringify(data)); // Chuyển đổi dữ liệu JSON thành chuỗi JSON và gửi đi
   } else {
     res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
