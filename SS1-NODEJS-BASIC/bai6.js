@@ -3,18 +3,17 @@ const port = 2023;
 const http = require("http");
 const fs = require("fs");
 const url = require("url");
+const querystring = require("querystring");
 
 let replaceTemplate = (temp, product) => {
   let output = temp.replace(/{{productName}}/g, product.productName);
   output = output.replace(/{{id}}/g, product.id);
   output = output.replace(/{{image}}/g, product.image);
   output = output.replace(/{{from}}/g, product.from);
-  output = output.replace(/{{from}}/g, product.from);
   output = output.replace(/{{nutrients}}/g, product.nutrients);
   output = output.replace(/{{quantity}}/g, product.quantity);
   output = output.replace(/{{price}}/g, product.price);
   output = output.replace(/{{description}}/g, product.description);
-
   if (!product.organic) {
     output = output.replace(/{{not_organic}}/g, "not-organic");
   }
@@ -27,6 +26,7 @@ const server = http.createServer((req, res) => {
   const data = JSON.parse(fs.readFileSync("./dev-data/data.json", "utf8"));
 
   const tempSearch = fs.readFileSync("./templates/template-search.html");
+  const tempAddproduct = fs.readFileSync("./templates/template-add.html");
 
   const tempProduct = fs.readFileSync(
     "./templates/template-product.html",
@@ -41,7 +41,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
 
   if (pathname === "/" || pathname === "/home") {
-    res.write("This is homepage");
+    res.write(tempOverview);
   } else if (pathname === "/overview") {
     const cardHtml = data.map((el) => replaceTemplate(tempCard, el)).join("");
     const output = tempOverview.replace("{{productCards}}", cardHtml);
@@ -72,6 +72,40 @@ const server = http.createServer((req, res) => {
   } else if (pathname === "/api") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.write(JSON.stringify(data));
+  } else if (pathname === "/addproducts") {
+    if (req.method == "POST") {
+      let newData = "";
+      req.on("data", (chunk) => {
+        console.log(chunk, "chunk");
+        newData += chunk.toString();
+        const result = querystring.parse(newData);
+        // console.log(result, "ẺDSDSADA");
+        // data.push(result);
+        // console.log(data, "data222");
+
+        const dataObj = JSON.parse(
+          fs.readFileSync("./dev-data/data.json", "utf8")
+        );
+        // const newProduct = {
+
+        //   productName: result.productName,
+        //   image: result.image,
+        //   from: result.from,
+        //   nutrients: result.nutrients,
+        //   quantity: result.quantity,
+        //   price: result.price,
+        //   description: result.description,
+        //   organic: result.organic === "on", // Checkbox có thể trả về "on" nếu được chọn
+        // };
+        const id = dataObj[dataObj.length - 1].id + 1;
+
+        dataObj.push({ ...result, id: id });
+        fs.writeFileSync("./dev-data/data.json", JSON.stringify(dataObj));
+        console.log(result);
+      });
+    }
+
+    res.write(tempAddproduct);
   } else {
     res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
     res.write("This is not found page");
