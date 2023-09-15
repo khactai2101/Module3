@@ -23,10 +23,10 @@ let replaceTemplate = (temp, product) => {
 
 const server = http.createServer((req, res) => {
   const { query, pathname } = url.parse(req.url, true);
-  console.log(query);
+
   const data = JSON.parse(fs.readFileSync("./dev-data/data.json", "utf8"));
 
-  // const dataObj = Json.parse(data);
+  const tempSearch = fs.readFileSync("./templates/template-search.html");
 
   const tempProduct = fs.readFileSync(
     "./templates/template-product.html",
@@ -48,18 +48,33 @@ const server = http.createServer((req, res) => {
     res.write(output);
   } else if (pathname === "/product") {
     const productQuery = data[query.id];
-    const output = replaceTemplate(tempProduct, productQuery);
+    if (productQuery) {
+      const output = replaceTemplate(tempProduct, productQuery);
+      res.write(output);
+    } else {
+      res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
+      res.write("Product not found");
+    }
+  } else if (pathname === "/search") {
+    res.write(tempSearch);
 
-    res.write(output);
+    if (query.search && typeof query.search === "string") {
+      const newData = data.filter((item) =>
+        item.productName.toLowerCase().includes(query.search.toLowerCase())
+      );
+      const mapData = newData
+        .map((el) => replaceTemplate(tempCard, el))
+        .join("");
+      res.write(mapData);
+    }
   } else if (pathname === "/card") {
     res.write(tempCard);
   } else if (pathname === "/api") {
     res.writeHead(200, { "Content-Type": "application/json" });
-
-    res.write(JSON.stringify(data)); // Chuyển đổi dữ liệu JSON thành chuỗi JSON và gửi đi
+    res.write(JSON.stringify(data));
   } else {
     res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-    res.write("This is notfound page");
+    res.write("This is not found page");
   }
   res.end();
 });
