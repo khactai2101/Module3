@@ -98,8 +98,13 @@ const server = http.createServer((req, res) => {
         //   organic: result.organic === "on", // Checkbox có thể trả về "on" nếu được chọn
         // };
         const id = dataObj[dataObj.length - 1].id + 1;
-
-        dataObj.push({ ...result, id: id });
+        let organic;
+        if (result.organic === "on") {
+          organic = true;
+        } else {
+          organic = false;
+        }
+        dataObj.push({ id: id, ...result, organic: organic });
         fs.writeFileSync("./dev-data/data.json", JSON.stringify(dataObj));
         console.log(result);
       });
